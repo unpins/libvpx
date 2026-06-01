@@ -77,6 +77,16 @@ let
 
       # Dispatcher: basename(argv[0]) → <tool>_main, '.exe' stripped, plus a
       # `${name} <applet> [args]` form so the bare binary stays callable.
+      #
+      # NOTE: intentionally does NOT use the shared nix-lib
+      # lib.multicallDispatcherC. vpxenc/vpxdec's shared tools_common.c.o calls
+      # usage_exit() by name; this dispatcher carries a per-tool function-pointer
+      # trampoline (g_usage_exit, set on dispatch) so each tool keeps its OWN
+      # usage banner. The shared generator has no such hook — modelling it would
+      # mean either the aom-style "one global usage_exit + localize the rest"
+      # (which shows the template tool's banner — a regression here) or a new
+      # parameter. This precise per-tool forwarding is the one genuine divergence
+      # (alongside openjpeg's exit-0 banner) the shared generator doesn't model.
       {
         echo '#include <string.h>'
         echo '#include <stdio.h>'
