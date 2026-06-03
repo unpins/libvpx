@@ -1,6 +1,6 @@
 # libvpx
 
-Standalone build of the [libvpx](https://www.webmproject.org/code/) VP8/VP9 codec command-line tools.
+Standalone build of the [libvpx](https://www.webmproject.org/code/) VP8/VP9 codec command-line programs.
 
 [![Build](https://github.com/unpins/libvpx/actions/workflows/libvpx.yml/badge.svg)](https://github.com/unpins/libvpx/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
@@ -9,10 +9,7 @@ Standalone build of the [libvpx](https://www.webmproject.org/code/) VP8/VP9 code
 
 Part of the [unpins](https://unpins.org) project — native single-binary builds with no third-party runtime dependencies.
 
-Encode and decode VP8/VP9 video. Ships the upstream programs:
-
-- `vpxenc` — encode Y4M/YUV input to a VP8/VP9 IVF or WebM stream.
-- `vpxdec` — decode a VP8/VP9 IVF/WebM stream to Y4M/YUV.
+Encode and decode VP8/VP9 video.
 
 ## Usage
 
@@ -30,6 +27,13 @@ unpin install libvpx
 ```
 
 `unpin install libvpx` creates the `vpxenc` and `vpxdec` commands.
+
+## Programs
+
+| command | what it does |
+| --- | --- |
+| `vpxenc` | encode Y4M/YUV → VP8/VP9 IVF or WebM |
+| `vpxdec` | decode a VP8/VP9 IVF/WebM stream → Y4M/YUV |
 
 ## Build locally
 
