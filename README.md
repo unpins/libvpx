@@ -9,31 +9,27 @@ Standalone build of the [libvpx](https://www.webmproject.org/code/) VP8/VP9 code
 
 Part of the [unpins](https://unpins.org) project — native single-binary builds with no third-party runtime dependencies.
 
-Encode and decode VP8/VP9 video. Ships as one multicall binary that dispatches to the upstream tools:
+Encode and decode VP8/VP9 video. Ships the upstream programs:
 
 - `vpxenc` — encode Y4M/YUV input to a VP8/VP9 IVF or WebM stream.
 - `vpxdec` — decode a VP8/VP9 IVF/WebM stream to Y4M/YUV.
 
-Run a tool by name or via the dispatcher:
+## Usage
+
+Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
-vpxenc --codec=vp9 -o out.webm in.y4m   # by name
-vpx enc --codec=vp9 -o out.webm in.y4m  # via the vpx dispatcher
+unpin libvpx vpxenc --codec=vp9 -o out.webm in.y4m
+unpin libvpx vpxdec -o out.y4m in.webm
 ```
 
-## Installation
-
-Install with [unpin](https://github.com/unpins/unpin):
+To install the programs onto your PATH:
 
 ```bash
-unpin libvpx
+unpin install libvpx
 ```
 
-Or run without installing:
-
-```bash
-unpin run libvpx -- vpxenc --help
-```
+`unpin install libvpx` creates the `vpxenc` and `vpxdec` commands.
 
 ## Build locally
 
