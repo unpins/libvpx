@@ -20,20 +20,11 @@ unpin libvpx vpxenc --codec=vp9 -o out.webm in.y4m
 unpin libvpx vpxdec -o out.y4m in.webm
 ```
 
-To install the programs onto your PATH:
+`unpin install libvpx` also creates the commands `vpxenc` (encode) and `vpxdec` (decode):
 
 ```bash
 unpin install libvpx
 ```
-
-`unpin install libvpx` creates the `vpxenc` and `vpxdec` commands.
-
-## Programs
-
-| command | what it does |
-| --- | --- |
-| `vpxenc` | encode Y4M/YUV → VP8/VP9 IVF or WebM |
-| `vpxdec` | decode a VP8/VP9 IVF/WebM stream → Y4M/YUV |
 
 ## Build locally
 
