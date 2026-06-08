@@ -1,13 +1,13 @@
 # libvpx
 
-Standalone build of the [libvpx](https://www.webmproject.org/code/) VP8/VP9 codec command-line programs.
+The [libvpx](https://www.webmproject.org/code/) VP8/VP9 codec command-line programs, as a single self-contained binary built natively for Linux, macOS, and Windows.
 
 [![Build](https://github.com/unpins/libvpx/actions/workflows/libvpx.yml/badge.svg)](https://github.com/unpins/libvpx/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
 ![macOS](https://img.shields.io/badge/macOS-✓-success?logo=apple&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-✓-success?logo=windows&logoColor=white)
 
-Part of the [unpins](https://unpins.org) project — native single-binary builds with no third-party runtime dependencies.
+Part of the [unpins](https://unpins.org) catalog; install it with [`unpin`](https://github.com/unpins/unpin): `unpin install libvpx`.
 
 Encode and decode VP8/VP9 video.
 
