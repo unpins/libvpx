@@ -75,8 +75,9 @@ let
           "$a.c.o"
       done
 
-      # Dispatcher: basename(argv[0]) → <tool>_main, '.exe' stripped, plus a
-      # `${name} <applet> [args]` form so the bare binary stays callable.
+      # Dispatcher: basename(argv[0]) → <tool>_main, '.exe' stripped (alias
+      # path), plus a `${name} --unpin-program=<applet>` selector for the bare
+      # binary — the unified multicall contract (no positional form).
       #
       # NOTE: intentionally does NOT use the shared nix-lib
       # lib.multicallDispatcherC. vpxenc/vpxdec's shared tools_common.c.o calls
@@ -130,14 +131,23 @@ int main(int argc, char **argv) {
     char base[64];
     const char *a0 = (argc > 0 && argv[0]) ? argv[0] : "${name}";
     copy_basename(base, sizeof base, a0);
-    if (strcmp(base, "${name}") == 0) {
-        if (argc < 2) return usage(a0);
-        copy_basename(base, sizeof base, argv[1]);
-        argv++; argc--;
+    int is_canon = strcmp(base, "${name}") == 0;
+    /* Alias path: a symlink named after an applet (not the canonical name)
+       runs via argv[0]; --unpin-program is ignored (identity lock). The active
+       tool's usage_exit hook is wired before dispatch. */
+    if (!is_canon)
+        for (const struct applet *a = applets; a->name; a++)
+            if (strcmp(base, a->name) == 0) { g_usage_exit = a->usage; return a->fn(argc, argv); }
+    /* Multitool: --unpin-program=NAME selects the applet (no positional form). */
+    if (argc >= 2 && strncmp(argv[1], "--unpin-program=", 16) == 0) {
+        const char *sel = argv[1] + 16;
+        for (const struct applet *a = applets; a->name; a++)
+            if (strcmp(sel, a->name) == 0) {
+                argv[1] = (char *)sel; g_usage_exit = a->usage; return a->fn(argc - 1, argv + 1);
+            }
+        fprintf(stderr, "${name}: no program '%s'\n", sel);
+        return usage(a0);
     }
-    for (const struct applet *a = applets; a->name; a++)
-        if (strcmp(base, a->name) == 0) { g_usage_exit = a->usage; return a->fn(argc, argv); }
-    fprintf(stderr, "${name}: unknown applet '%s'\n", base);
     return usage(a0);
 }
 CBODY
