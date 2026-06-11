@@ -1,5 +1,5 @@
 {
-  description = "Standalone build of the libvpx VP8/VP9 codec tools (vpxenc / vpxdec)";
+  description = "the libvpx VP8/VP9 codec tools (vpxenc / vpxdec) as a single self-contained binary";
 
   nixConfig = {
     extra-substituters = [ "https://unpins.cachix.org" ];

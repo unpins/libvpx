@@ -2,7 +2,7 @@
 
 The [libvpx](https://www.webmproject.org/code/) VP8/VP9 codec command-line programs, as a single self-contained binary built natively for Linux, macOS, and Windows.
 
-[![Build](https://github.com/unpins/libvpx/actions/workflows/libvpx.yml/badge.svg)](https://github.com/unpins/libvpx/actions)
+[![CI](https://github.com/unpins/libvpx/actions/workflows/libvpx.yml/badge.svg)](https://github.com/unpins/libvpx/actions)
 ![Linux](https://img.shields.io/badge/Linux-✓-success?logo=linux&logoColor=white)
 ![macOS](https://img.shields.io/badge/macOS-✓-success?logo=apple&logoColor=white)
 ![Windows](https://img.shields.io/badge/Windows-✓-success?logo=windows&logoColor=white)
