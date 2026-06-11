@@ -80,14 +80,27 @@ let
       # binary — the unified multicall contract (no positional form).
       #
       # NOTE: intentionally does NOT use the shared nix-lib
-      # lib.multicallDispatcherC. vpxenc/vpxdec's shared tools_common.c.o calls
-      # usage_exit() by name; this dispatcher carries a per-tool function-pointer
-      # trampoline (g_usage_exit, set on dispatch) so each tool keeps its OWN
-      # usage banner. The shared generator has no such hook — modelling it would
-      # mean either the aom-style "one global usage_exit + localize the rest"
-      # (which shows the template tool's banner — a regression here) or a new
-      # parameter. This precise per-tool forwarding is the one genuine divergence
-      # (alongside openjpeg's exit-0 banner) the shared generator doesn't model.
+      # lib.multicallDispatcherC, and is the LONE hand-written dispatcher left in
+      # the catalog (xmllint and openjpeg fold into the generator). It earns the
+      # exception: vpxenc/vpxdec's shared tools_common.c.o reaches usage_exit()
+      # through die() — the COMMON fatal-error path (vpxdec's "Unrecognized
+      # option", bad --codec, output-name errors; 6 sites in vpxdec.c + 2 in
+      # tools_common.c) — and each tool's usage_exit prints its OWN static
+      # show_help (encoder vs decoder options, vpxenc.c vs vpxdec.c). This
+      # dispatcher carries a per-tool function-pointer trampoline (g_usage_exit,
+      # set on dispatch) so a bad-option vpxdec keeps showing the DECODER help,
+      # not the encoder's.
+      #
+      # The shared generator has no such hook. Folding would mean either the
+      # aom-style "keep one usage_exit global + --localize the rest" — which makes
+      # every die()-path error print the OTHER tool's full banner (a real,
+      # common-path UX regression; aom itself ships with exactly this) — or
+      # bolting a hook parameter onto the generator for this single consumer
+      # (aom can't even reuse it: its other hook exec_name is a DATA symbol, no
+      # trampoline). Keeping the forwarding here, where it's needed, is the
+      # deliberate call: the one genuine divergence the shared generator doesn't
+      # model. (Unlike openjpeg, whose exit-0 banner the rewritten generator's
+      # bare fallback already reproduced for free.)
       {
         echo '#include <string.h>'
         echo '#include <stdio.h>'
