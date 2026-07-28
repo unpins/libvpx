@@ -80,7 +80,7 @@ let
       # binary — the unified multicall contract (no positional form).
       #
       # NOTE: intentionally does NOT use the shared nix-lib
-      # lib.multicallDispatcherC, and is the LONE hand-written dispatcher left in
+      # lib.multicallTableDispatcherC, and is the LONE hand-written dispatcher left in
       # the catalog (xmllint and openjpeg fold into the generator). It earns the
       # exception: vpxenc/vpxdec's shared tools_common.c.o reaches usage_exit()
       # through die() — the COMMON fatal-error path (vpxdec's "Unrecognized
