@@ -26,22 +26,20 @@
       # (returned directly) and the multicall fold (darwin/windows, via
       # multicall.nix which does the same flag rewrite itself).
       withExamples = scope:
-        let isLinux = scope.stdenv.hostPlatform.isLinux; in
+        let isEngine = scope.lib.hasInfix "unpin-cc" (scope.stdenv.cc.name or ""); in
         (ulib.nativeFixes.libvpx scope).overrideAttrs (old: {
+          # SIMD stays ON: libvpx's kernels (vpx_*_sse2/ssse3/avx2, the per-arch
+          # NEON/VSX equivalents) are yasm/asm objects that can't enter the -flto
+          # bitcode module, but the engine hook rescues native objects into a
+          # sidecar (module_native.a) the self-fold links alongside module.bc, so
+          # they resolve. A pure-C `--target=generic-gnu` build links too, and
+          # measured 48-50 fps against 124-132 fps for the same bit-identical VP9
+          # encode — 2.6x, not a tradeoff worth taking.
           configureFlags =
             (builtins.filter
-              (f: f != "--disable-examples" && f != "--disable-install-bins"
-                && !(isLinux && scope.lib.hasPrefix "--target=" f))
+              (f: f != "--disable-examples" && f != "--disable-install-bins")
               (old.configureFlags or [ ]))
-            ++ [ "--enable-examples" "--enable-install-bins" ]
-            # Engine (Linux) path: libvpx's SIMD kernels (vpx_*_sse2/ssse3/avx2,
-            # the per-arch NEON/VSX/... equivalents) are yasm/asm objects, not C —
-            # they can't enter the -flto bitcode module, so the LTO self-fold link
-            # leaves them undefined (`vpx_sad16x16_sse2`, …). Build the pure-C
-            # `generic-gnu` target (no asm, runtime CPU detect off) so the whole
-            # codec is bitcode — same SIMD-off tradeoff jpeg-tools makes on the
-            # engine. The darwin/windows objcopy fold (multicall.nix) keeps SIMD.
-            ++ scope.lib.optionals isLinux [ "--target=generic-gnu" "--disable-runtime-cpu-detect" ];
+            ++ [ "--enable-examples" "--enable-install-bins" ];
           # Engine path: libvpx generates per-object `.d` dependency files with
           # `$(CC) -M $< | $(fmt_deps)` and `-include`s them on the next make
           # pass. The unpin-llvm engine's clang resolves its musl libc headers
@@ -52,7 +50,7 @@
           # to drop any prerequisite under that virtual root — they are stable
           # toolchain headers, never a reason to rebuild, so dropping them only
           # loses header-edit tracking we don't use in a one-shot Nix build.
-          postPatch = (old.postPatch or "") + scope.lib.optionalString scope.stdenv.hostPlatform.isLinux ''
+          postPatch = (old.postPatch or "") + scope.lib.optionalString isEngine ''
             substituteInPlace build/make/configure.sh \
               --replace-fail \
                 "fmt_deps = sed -e " \
@@ -98,23 +96,13 @@
         requires.cxx = true;
       };
 
-      # Linux passes through; darwin needs the overlay's osxMinVersion bridge +
-      # darwin23 target rewrite. Examples are on by upstream default here.
-      # The tools pull C++ (vendored webm); on darwin clang++ would link
-      # /usr/lib/libc++.1.dylib (forbidden by the single-binary policy), so
-      # static-link libc++ into the final link — same as srt/x265's darwin
-      # branch. Linux pkgsStatic links libstdc++ statically already.
-      build = pkgs:
-        if pkgs.stdenv.hostPlatform.isLinux
-        then withExamples pkgs.pkgsStatic   # engine path: examples → bitcode → selfFold
-        else
-          let sp = pkgs.pkgsStatic; in
-          mk pkgs ({
-            pkgs = sp;
-            libvpx = ulib.nativeFixes.libvpx sp;
-          } // pkgs.lib.optionalAttrs sp.stdenv.hostPlatform.isDarwin {
-            extraLinkFlags = "-nostdlib++ ${sp.libcxx}/lib/libc++.a ${sp.libcxx}/lib/libc++abi.a";
-          });
+      # Linux AND darwin: examples → bitcode → engine self-fold. darwin used to
+      # take multicall.nix, but the engine reaches darwin too, so its objects are
+      # bitcode and the fold's `llvm-objcopy --redefine-sym` cannot read them
+      # ("not recognized as a valid object file"). The tools pull C++ (vendored
+      # webm); requires.cxx folds libc++ statically, which also settles the
+      # /usr/lib/libc++.1.dylib the darwin allowlist rejects.
+      build = pkgs: withExamples pkgs.pkgsStatic;
 
       # mingw cross. cross.libvpx carries the overlay's target=x86_64-win64-gcc
       # + CROSS + winpthreads fixes (and examplesSupport=false, which
