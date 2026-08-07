@@ -132,11 +132,22 @@ static void copy_basename(char *dst, size_t cap, const char *src) {
 }
 CBODY
         cat <<CBODY
-static int usage(const char *a0) {
-    fprintf(stderr, "${name}: multicall binary; usage: %s <applet> [args]\n", a0);
-    fprintf(stderr, "applets:");
+/* Word for word what lib.multicallTableDispatcherC's list_programs prints. The
+   listing is a CONTRACT, not cosmetics: the release smoke reads this first line
+   to learn the applet set and cross-checks it against the announced
+   `unpin/aliases`. A bespoke wording made the sweep fall back to guessing the
+   set from the package name, and then failed on a `vpx` applet that never
+   existed. */
+static void list_programs(FILE *out) {
+    fprintf(out, "${name} is one binary with several programs:");
     for (const struct applet *a = applets; a->name; a++)
-        fprintf(stderr, " %s", a->name);
+        fprintf(out, "%s%s", a == applets ? " " : ", ", a->name);
+    fprintf(out, "\nRun one: ${name} --unpin-program=<program> [args...]\n");
+}
+static int usage(void) {
+    fprintf(stderr, "${name}: select a program with --unpin-program=<name>. Available:");
+    for (const struct applet *a = applets; a->name; a++)
+        fprintf(stderr, "%s%s", a == applets ? " " : ", ", a->name);
     fprintf(stderr, "\n");
     return 1;
 }
@@ -159,9 +170,13 @@ int main(int argc, char **argv) {
                 argv[1] = (char *)sel; g_usage_exit = a->usage; return a->fn(argc - 1, argv + 1);
             }
         fprintf(stderr, "${name}: no program '%s'\n", sel);
-        return usage(a0);
+        return 1;
     }
-    return usage(a0);
+    if (argc < 2) { list_programs(stdout); return 0; }
+    if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h") || !strcmp(argv[1], "help")) {
+        list_programs(stdout); return 0;
+    }
+    return usage();
 }
 CBODY
       } > multicall/dispatcher.c
