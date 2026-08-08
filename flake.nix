@@ -10,21 +10,19 @@
 
   # libvpx ships its CLI tools (vpxenc / vpxdec) as "examples". The shared
   # nix-lib overlay used by ffmpeg builds the library only (examplesSupport
-  # off — ffmpeg just wants libvpx.a); here multicall.nix turns the examples
-  # back on and post-links vpxenc + vpxdec into a single `vpx` binary. See
-  # ./multicall.nix for the link mechanics.
+  # off — ffmpeg just wants libvpx.a); here we turn the examples back on and
+  # nix-lib self-folds vpxenc + vpxdec into a single `vpx` binary.
   outputs = { self, unpins-lib }:
     let
       ulib = unpins-lib.lib;
-      mk = pkgs: extra: import ./multicall.nix { lib = pkgs.lib // ulib; } extra;
 
       # libvpx with the example CLIs (vpxenc/vpxdec) turned back on. The shared
       # overlay used by ffmpeg disables examples (`--disable-examples`,
       # `--disable-install-bins`) because ffmpeg wants only libvpx.a; here we
       # rewrite those flags back on (re-`.override`ing examplesSupport would
-      # discard the darwin/mingw overrideAttrs). Shared by the engine path
-      # (returned directly) and the multicall fold (darwin/windows, via
-      # multicall.nix which does the same flag rewrite itself).
+      # discard the darwin/mingw overrideAttrs). Shared by every target — the
+      # engine gates below key off the scope's own cc, so the mingw cross picks
+      # them up too now that it runs on the adapter.
       withExamples = scope:
         let isEngine = scope.lib.hasInfix "unpin-cc" (scope.stdenv.cc.name or ""); in
         (ulib.nativeFixes.libvpx scope).overrideAttrs (old: {
@@ -82,13 +80,13 @@
       smoke = [ "--unpin-program=vpxenc" "--help" ];
       smokePattern = "Usage:";
 
-      # Build via the unpin-llvm engine + emit a bitcode multicall module. On
-      # Linux the engine compiles libvpx (examples on) to bitcode and the
-      # standalone self-folds vpxenc + vpxdec into one `vpx` binary; darwin
-      # keeps the objcopy fold in ./multicall.nix, windows via windowsBuild.
+      # Build via the unpin-llvm engine + emit a bitcode multicall module: the
+      # engine compiles libvpx (examples on) to bitcode and the standalone
+      # self-folds vpxenc + vpxdec into one `vpx` binary on every target.
       pkgsAttr = "libvpx";
       engine = "unpin-llvm";
       multicall = {
+        windows = true;
         programs = [
           { name = "vpxenc"; }
           { name = "vpxdec"; }
@@ -96,25 +94,15 @@
         requires.cxx = true;
       };
 
-      # Linux AND darwin: examples → bitcode → engine self-fold. darwin used to
-      # take multicall.nix, but the engine reaches darwin too, so its objects are
-      # bitcode and the fold's `llvm-objcopy --redefine-sym` cannot read them
-      # ("not recognized as a valid object file"). The tools pull C++ (vendored
+      # Examples → bitcode → engine self-fold. The tools pull C++ (vendored
       # webm); requires.cxx folds libc++ statically, which also settles the
       # /usr/lib/libc++.1.dylib the darwin allowlist rejects.
       build = pkgs: withExamples pkgs.pkgsStatic;
 
-      # mingw cross. cross.libvpx carries the overlay's target=x86_64-win64-gcc
-      # + CROSS + winpthreads fixes (and examplesSupport=false, which
-      # multicall.nix flips back via configureFlags — re-`.override`ing would
-      # discard those overrideAttrs). The examples link C++ (webm) and pull the
-      # mingw runtime as DLLs unless the final link forces it static.
-      windowsBuild = pkgs:
-        let cross = ulib.mingwStaticCross pkgs; in
-        mk pkgs {
-          pkgs = cross;
-          libvpx = cross.libvpx;
-          extraLinkFlags = "-static -static-libgcc -static-libstdc++";
-        };
+      # mingw cross — the same helper. mingw-overlay/libvpx.nix already gave the
+      # scope's libvpx its target=x86_64-win64-gcc + CROSS + winpthreads fixes;
+      # withExamples layers nativeFixes.libvpx on top, whose engine branch (the
+      # VFS depfile + gnu_strip breakages) now applies here too.
+      windowsBuild = pkgs: withExamples (ulib.mingwStaticCross pkgs);
     };
 }
