@@ -41,8 +41,8 @@ The [Releases](https://github.com/unpins/libvpx/releases) page has standalone bi
 
 ## Build notes
 
-- **Single multicall binary** — `vpxenc` + `vpxdec` are post-linked into one `vpx`; tool names are recreated as `argv[0]` shims on install. WebM in/out and libyuv scaling are included.
+- **Single multicall binary** — `vpxenc` + `vpxdec` are folded into one `vpx`; installing recreates both tool names. WebM in/out and libyuv scaling are included.
 - **No man pages** — libvpx ships none upstream; both tools print their options with `--help`.
 - **Windows:** `mingw` cross, single `.exe`, no companion DLLs (the C++ webm/libyuv runtime is folded in statically).
 
-The multicall link recipe is in [`multicall.nix`](./multicall.nix).
+The fold is done by the unpin-llvm engine, declared in `flake.nix`.
