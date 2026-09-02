@@ -88,8 +88,9 @@
       multicall = {
         windows = true;
         programs = [
-          { name = "vpxenc"; }
-          { name = "vpxdec"; }
+          # libvpx installs no man pages at all.
+          { name = "vpxenc"; noMan = true; }
+          { name = "vpxdec"; noMan = true; }
         ];
         requires.cxx = true;
       };
