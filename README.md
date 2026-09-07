@@ -16,15 +16,27 @@ Encode and decode VP8/VP9 video.
 Run a program with [unpin](https://github.com/unpins/unpin):
 
 ```bash
-unpin libvpx vpxenc --codec=vp9 -o out.webm in.y4m
-unpin libvpx vpxdec -o out.y4m in.webm
+unpin libvpx --unpin-program=vpxenc --codec=vp9 -o out.webm in.y4m
+unpin libvpx --unpin-program=vpxdec -o out.y4m in.webm
 ```
 
-`unpin install libvpx` also creates the commands `vpxenc` (encode) and `vpxdec` (decode):
+Or install them and call each by name, which is usually what you want:
 
 ```bash
 unpin install libvpx
+vpxenc --codec=vp9 -o out.webm in.y4m
 ```
+
+`unpin install libvpx` creates the `vpxenc` and `vpxdec` commands.
+
+## Programs
+
+| program | what it does |
+|---|---|
+| `vpxenc` | encode Y4M/raw video to VP8 or VP9, in a WebM or IVF container |
+| `vpxdec` | decode VP8/VP9 back to Y4M or raw frames |
+
+Neither takes `--version`; both list their options with `--help`.
 
 ## Build locally
 
