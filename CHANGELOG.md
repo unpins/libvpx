@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.16.0-2] - 2026-09-26
+
 ### Fixed
 
 - The README showed `unpin libvpx vpxenc …`, which does not work — the program
